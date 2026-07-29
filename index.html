@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Uitspraken Schenk- en Erfbelasting</title>
+<style>
+  :root {
+    --blauw: #1a3a5c;
+    --blauw-licht: #2563a8;
+    --goud: #c8a84b;
+    --groen: #1a7a4a;
+    --oranje: #c05c1a;
+    --rood: #a01a1a;
+    --grijs-licht: #f4f6f9;
+    --grijs-border: #d0d7e3;
+    --tekst: #1a1e2a;
+    --tekst-sub: #4a5568;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--grijs-licht); color: var(--tekst); font-size: 14px; line-height: 1.5; }
+  .header { background: var(--blauw); color: white; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; }
+  .header-title { font-size: 18px; font-weight: 700; }
+  .header-sub { font-size: 12px; opacity: 0.75; margin-top: 2px; }
+  .scan-banner { background: white; border-bottom: 2px solid var(--grijs-border); padding: 12px 20px; display: flex; gap: 24px; align-items: center; flex-wrap: wrap; }
+  .scan-badge { display: flex; flex-direction: column; align-items: center; }
+  .scan-badge .num { font-size: 22px; font-weight: 800; color: var(--blauw); }
+  .scan-badge .lbl { font-size: 11px; color: var(--tekst-sub); text-transform: uppercase; letter-spacing: 0.5px; }
+  .scan-divider { width: 1px; height: 36px; background: var(--grijs-border); }
+  .scan-info { font-size: 12px; color: var(--tekst-sub); }
+  .scan-info strong { color: var(--tekst); }
+  .filters { background: white; padding: 10px 20px; border-bottom: 1px solid var(--grijs-border); display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .filters label { font-size: 12px; color: var(--tekst-sub); font-weight: 600; }
+  .filters select, .filters input { border: 1px solid var(--grijs-border); border-radius: 6px; padding: 5px 10px; font-size: 13px; background: white; color: var(--tekst); }
+  .filters input { min-width: 200px; }
+  .filter-reset { background: none; border: 1px solid var(--grijs-border); border-radius: 6px; padding: 5px 12px; font-size: 12px; cursor: pointer; color: var(--tekst-sub); }
+  .filter-reset:hover { background: var(--grijs-licht); }
+  .count-info { margin-left: auto; font-size: 12px; color: var(--tekst-sub); }
+  .cards { padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; }
+  .card { background: white; border: 1px solid var(--grijs-border); border-radius: 10px; overflow: hidden; transition: box-shadow 0.15s; }
+  .card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+  .card-header { padding: 12px 16px; display: flex; gap: 12px; align-items: flex-start; cursor: pointer; }
+  .card-header:hover { background: #f9fafb; }
+  .badge-instantie { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 12px; white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
+  .instantie-hr { background: #fef3c7; color: #92400e; }
+  .instantie-hof { background: #ede9fe; color: #5b21b6; }
+  .instantie-rb { background: #e0f2fe; color: #0369a1; }
+  .card-body { flex: 1; min-width: 0; }
+  .card-ecli { font-size: 11px; color: var(--tekst-sub); font-family: monospace; margin-bottom: 3px; }
+  .card-onderwerp { font-weight: 600; font-size: 14px; color: var(--blauw); line-height: 1.3; }
+  .card-meta { display: flex; gap: 8px; align-items: center; margin-top: 4px; flex-wrap: wrap; }
+  .badge-belang { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+  .belang-hoog { background: #fef2f2; color: var(--rood); border: 1px solid #fca5a5; }
+  .belang-middel { background: #fff7ed; color: var(--oranje); border: 1px solid #fdba74; }
+  .belang-laag { background: #f0fdf4; color: var(--groen); border: 1px solid #86efac; }
+  .badge-oordeel { font-size: 11px; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--grijs-border); color: var(--tekst-sub); }
+  .oordeel-gegrond { background: #f0fdf4; color: var(--groen); border-color: #86efac; }
+  .oordeel-ongegrond { background: #fef2f2; color: var(--rood); border-color: #fca5a5; }
+  .badge-sig { background: var(--goud); color: white; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 10px; }
+  .badge-nieuw { background: #dcfce7; color: #166534; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 10px; border: 1px solid #86efac; }
+  .card-datum { font-size: 11px; color: var(--tekst-sub); }
+  .card-artikelen { font-size: 11px; color: var(--blauw-licht); margin-top: 2px; }
+  .card-chevron { color: var(--grijs-border); font-size: 16px; flex-shrink: 0; margin-top: 2px; transition: transform 0.2s; }
+  .card.open .card-chevron { transform: rotate(90deg); }
+  .card-expand { display: none; padding: 0 16px 14px 16px; border-top: 1px solid var(--grijs-licht); }
+  .card.open .card-expand { display: block; }
+  .expand-section { margin-top: 12px; }
+  .expand-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--tekst-sub); margin-bottom: 4px; }
+  .expand-text { font-size: 13px; color: var(--tekst); line-height: 1.6; }
+  .rechtsregel-box { background: #f0f7ff; border-left: 3px solid var(--blauw-licht); padding: 10px 14px; border-radius: 0 6px 6px 0; font-size: 13px; line-height: 1.6; }
+  .expand-link { display: inline-block; margin-top: 10px; font-size: 12px; color: var(--blauw-licht); text-decoration: none; }
+  .expand-link:hover { text-decoration: underline; }
+  .annotatie-box { background: #fefce8; border: 1px solid #fde68a; border-radius: 6px; padding: 8px 12px; font-size: 12px; color: #78350f; margin-top: 8px; }
+  .geen-resultaten { text-align: center; padding: 40px 20px; color: var(--tekst-sub); }
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <div class="header-title">Uitspraken Schenk- en Erfbelasting</div>
+    <div class="header-sub">Dagelijkse scan rechtspraak.nl &middot; Successiewet 1956</div>
+  </div>
+  <div style="font-size:12px;opacity:0.7;text-align:right;">
+    <div id="laatste-update"></div>
+    <div>via Open Data API</div>
+  </div>
+</div>
+<div class="scan-banner" id="scan-banner"></div>
+<div class="filters">
+  <label>Instantie</label>
+  <select id="f-instantie">
+    <option value="">Alle</option>
+    <option value="hoge raad">Hoge Raad</option>
+    <option value="gerechtshof">Gerechtshof</option>
+    <option value="rechtbank">Rechtbank</option>
+  </select>
+  <label>Belang</label>
+  <select id="f-belang">
+    <option value="">Alle</option>
+    <option value="hoog">Hoog</option>
+    <option value="middel">Middel</option>
+    <option value="laag">Laag</option>
+  </select>
+  <label>Oordeel</label>
+  <select id="f-oordeel">
+    <option value="">Alle</option>
+    <option value="gegrond">Gegrond</option>
+    <option value="ongegrond">Ongegrond</option>
+    <option value="voor">Voor belastingplichtige</option>
+    <option value="tegen">Tegen belastingplichtige</option>
+  </select>
+  <label>Zoeken</label>
+  <input type="text" id="f-zoek" placeholder="ECLI, onderwerp, wetsartikel...">
+  <button class="filter-reset" onclick="resetFilters()">x Reset</button>
+  <span class="count-info" id="count-info"></span>
+</div>
+<div class="cards" id="cards-container"></div>
+
+<script>
+const UITSPRAKEN_DATA = {
+ "laatste_update": "2026-07-24T17:03:24.448475+00:00",
+ "uitspraken": [
+  {
+   "ecli": "ECLI:NL:RBZWB:2026:5367",
+   "instantie": "Rechtbank Zeeland-West-Brabant",
+   "datum": "2026-06-18",
+   "gepubliceerd": "2026-06-26",
+   "onderwerp": "Schenk- en erfbelasting; gewetensbezwaren tegen belastingbetaling",
+   "samenvatting": "Belanghebbende (woonachtig in Frankrijk) had gewetensbezwaren tegen de aanwending van Nederlandse belastinggelden voor militaire doeleinden en wenste daarom de aanslagen schenkbelasting (schenking 2021 van €128.750) en erfbelasting (verkrijging 2021 van €206.009) niet te voldoen. Niet in geschil was dat de aanslagen in overeenstemming met de Successiewet 1956 waren vastgesteld. De rechtbank oordeelt dat de aanwending van belastingopbrengsten een politieke en geen rechterlijke kwestie is en dat gewetensbezwaren niet tot vermindering van de aanslagen kunnen leiden. Ook het verzoek om een dwangsom faalt omdat de inspecteur binnen twee weken na ingebrekestelling besliste. Beroepen ongegrond.",
+   "rechtsregel": "Gewetensbezwaren tegen de aanwending van belastinggelden vormen geen grond voor vermindering van een conform de Successiewet 1956 vastgestelde aanslag schenk- of erfbelasting; de besteding van belastingopbrengsten is een politieke, niet een rechterlijke aangelegenheid.",
+   "wetsartikelen": [
+    "Successiewet 1956 (algemeen)",
+    "art. 4:17 Awb (dwangsom)"
+   ],
+   "belang": "laag",
+   "oordeel": "ongegrond",
+   "url": "https://uitspraken.rechtspraak.nl/details?id=ECLI:NL:RBZWB:2026:5367"
+  },
+  {
+   "ecli": "ECLI:NL:GHARL:2026:4066",
+   "instantie": "Gerechtshof Arnhem-Leeuwarden",
+   "datum": "2026-06-16",
+   "gepubliceerd": "2026-06-26",
+   "onderwerp": "Quasi-wettelijke verdeling; leegwaarderatio bij verhuurde woning",
+   "samenvatting": "Erflater sloot in zijn testament de wettelijke verdeling uit en legde een quasi-wettelijke verdeling op; alle goederen (waaronder een verhuurde woning) gingen naar de langstlevende echtgenote, de kinderen verkregen een onderbedelingsvordering. Belanghebbende was ten tijde van het overlijden huurder van de woning. De inspecteur paste bij haar de leegwaarderatio niet toe (art. 21, lid 8, laatste volzin SW: verkrijging door huurder), waardoor haar verkrijging hoger uitviel dan die van haar broer en zus. Het Hof oordeelt dat belanghebbende krachtens erfrecht een geldvordering heeft verkregen (art. 1, lid 3, jo. art. 10, lid 5 SW), en niet de woning zelf, zodat de uitzondering voor de verkrijgende huurder niet geldt. De leegwaarderatio (62%) moet ook bij haar worden toegepast; de aanslag wordt verminderd tot een belaste verkrijging van €38.358. Hoger beroep inspecteur ongegrond, bevestiging rechtbank.",
+   "rechtsregel": "Bij een quasi-wettelijke verdeling verkrijgt het kind krachtens erfrecht een onderbedelingsvordering (art. 1, lid 3, jo. art. 10, lid 5 SW) en niet de tot de nalatenschap behorende woning zelf; de uitzondering van art. 21, lid 8, laatste volzin SW (geen leegwaarderatio bij verkrijging door de huurder) is daarom niet van toepassing, ook als het kind feitelijk huurder van de woning was.",
+   "wetsartikelen": [
+    "art. 1, lid 3 SW 1956",
+    "art. 10, lid 5 SW 1956",
+    "art. 21, lid 5 SW 1956",
+    "art. 21, lid 8 SW 1956"
+   ],
+   "belang": "hoog",
+   "oordeel": "ongegrond",
+   "url": "https://uitspraken.rechtspraak.nl/details?id=ECLI:NL:GHARL:2026:4066"
+  },
+  {
+   "ecli": "ECLI:NL:RBZWB:2026:5371",
+   "instantie": "Rechtbank Zeeland-West-Brabant",
+   "datum": "2026-06-18",
+   "gepubliceerd": "2026-06-25",
+   "onderwerp": "Fictieve verkrijging art. 13a SW; waardestijging aandelen door overlijden",
+   "samenvatting": "Belanghebbende houdt alle aandelen in een BV die (via certificering en een tussenhoudster) een vennootschap bezit waarop een lijfrenteverplichting jegens een derde rustte. Door het overlijden van de lijfrentegerechtigde verviel de verplichting, waardoor de aandelen in waarde stegen. De inspecteur nam op grond van art. 13a SW een fictieve verkrijging in aanmerking. De rechtbank oordeelt dat de omstandigheden binnen het door de wetgever voorziene toepassingsbereik van art. 13a SW vallen; de bepaling kan als wet in formele zin niet aan het evenredigheidsbeginsel worden getoetst en het beroep op art. 1 EP en art. 14 EVRM faalt (de beperking tot de familiekring is niet van redelijke grond ontbloot). Beroep ongegrond.",
+   "rechtsregel": "Een waardestijging van aandelen die het gevolg is van het vervallen van een op de vennootschap rustende lijfrenteverplichting door overlijden valt binnen het toepassingsbereik van de fictieve verkrijging van art. 13a SW; de bepaling kan als formele wet niet aan het evenredigheidsbeginsel worden getoetst en is niet in strijd met art. 1 EP / art. 14 EVRM.",
+   "wetsartikelen": [
+    "art. 13a SW 1956",
+    "art. 1 EP EVRM",
+    "art. 14 EVRM"
+   ],
+   "belang": "middel",
+   "oordeel": "ongegrond",
+   "url": "https://uitspraken.rechtspraak.nl/details?id=ECLI:NL:RBZWB:2026:5371"
+  },
+  {
+   "ecli": "ECLI:NL:RBZWB:2026:5372",
+   "instantie": "Rechtbank Zeeland-West-Brabant",
+   "datum": "2026-06-18",
+   "gepubliceerd": "2026-06-25",
+   "onderwerp": "Fictieve verkrijging art. 13a SW (parallelzaak zus)",
+   "samenvatting": "Parallelzaak van ECLI:NL:RBZWB:2026:5371 betreffende de zus van belanghebbende, met dezelfde aandelenstructuur en lijfrenteverplichting. De rechtbank komt tot hetzelfde oordeel: de inspecteur heeft terecht een fictieve verkrijging op grond van art. 13a SW in aanmerking genomen wegens de waardestijging van de aandelen door het vervallen van de lijfrenteverplichting bij overlijden. Beroep ongegrond.",
+   "rechtsregel": "Identiek aan ECLI:NL:RBZWB:2026:5371: waardestijging van aandelen door het vervallen van een lijfrenteverplichting bij overlijden valt onder de fictieve verkrijging van art. 13a SW.",
+   "wetsartikelen": [
+    "art. 13a SW 1956",
+    "art. 1 EP EVRM",
+    "art. 14 EVRM"
+   ],
+   "belang": "middel",
+   "oordeel": "ongegrond",
+   "url": "https://uitspraken.rechtspraak.nl/details?id=ECLI:NL:RBZWB:2026:5372"
+  },
+  {
+   "ecli": "ECLI:NL:RBZWB:2026:5370",
+   "instantie": "Rechtbank Zeeland-West-Brabant",
+   "datum": "2026-06-18",
+   "gepubliceerd": "2026-06-25",
+   "onderwerp": "Erfbelasting; WOZ-waarde woning staat in rechte vast (art. 18a AWR)",
+   "samenvatting": "Tot de in 2012 verkregen nalatenschap behoorde een woning waarvan de WOZ-waarde op €534.000 was vastgesteld. In latere jaren erkende de BsGW een te hoge waardering, maar de WOZ-beschikking voor het peiljaar 2012 bleef onherroepelijk. De inspecteur verminderde de (eveneens onherroepelijke) aanslag erfbelasting ambtshalve op grond van art. 18a, lid 1, onderdeel b, AWR uitgaande van €350.000. Belanghebbende wenste een verdere verlaging. De rechtbank oordeelt dat voor de erfbelasting wordt aangesloten bij de in rechte vaststaande WOZ-waarde en dat de aanslag alleen verder kan worden verminderd indien de WOZ-beschikking zelf wordt herzien; dat is hier niet gebeurd. Beroep ongegrond.",
+   "rechtsregel": "Voor de waardering van een woning in de erfbelasting wordt aangesloten bij de in rechte vaststaande WOZ-waarde van het verkrijgingsjaar; een onherroepelijke aanslag kan op de voet van art. 18a AWR uitsluitend verder worden verminderd indien de onderliggende WOZ-beschikking wordt herzien.",
+   "wetsartikelen": [
+    "art. 21, lid 5 SW 1956",
+    "art. 18a AWR"
+   ],
+   "belang": "laag",
+   "oordeel": "ongegrond",
+   "url": "https://uitspraken.rechtspraak.nl/details?id=ECLI:NL:RBZWB:2026:5370"
+  },
+  {
+   "ecli": "ECLI:NL:GHSHE:2026:1357",
+   "instantie": "Gerechtshof 's-Hertogenbosch",
+   "datum": "2026-05-27",
+   "gepubliceerd": "2026-06-24",
+   "onderwerp": "Integrale proceskostenvergoeding na gegrond bezwaar aanslag erfbelasting",
+   "samenvatting": "De inspecteur had een aanslag erfbelasting opgelegd naar een geschatte verkrijging van €1.000.000 en het bezwaar daartegen later gegrond verklaard. In geschil is of belanghebbende recht heeft op een integrale (in plaats van forfaitaire) proceskostenvergoeding wegens onzorgvuldig handelen van de inspecteur en wegens een door de rechtbank vastgestelde schending van art. 8:42 Awb. Het hof oordeelt dat geen sprake is van bijzondere omstandigheden in de zin van art. 2, lid 3, Besluit proceskosten bestuursrecht en bevestigt de uitspraak van de rechtbank; het hoger beroep is ongegrond.",
+   "rechtsregel": "Het schatten van een verkrijging en een schending van art. 8:42 Awb leveren op zichzelf geen bijzondere omstandigheid op die een integrale proceskostenvergoeding (art. 2, lid 3, Bpb) rechtvaardigt; daarvoor is verdergaande onzorgvuldigheid (tegen beter weten in handelen) vereist.",
+   "wetsartikelen": [
+    "art. 8:42 Awb",
+    "art. 2 Besluit proceskosten bestuursrecht"
+   ],
+   "belang": "middel",
+   "oordeel": "ongegrond",
+   "url": "https://uitspraken.rechtspraak.nl/details?id=ECLI:NL:GHSHE:2026:1357"
+  },
+  {
+   "ecli": "ECLI:NL:RBGEL:2024:6970",
+   "instantie": "Rechtbank Gelderland",
+   "datum": "2024-10-14",
+   "gepubliceerd": "2026-06-24",
+   "onderwerp": "Leegwaarderatio woning bij quasi-wettelijke verdeling (erfbelasting)",
+   "samenvatting": "Erflater benoemde zijn echtgenote voor 1% en zijn drie kinderen ieder voor 33% tot erfgenaam en stelde de wettelijke verdeling buiten toepassing, met een keuze voor een quasi-wettelijke verdeling. Belanghebbende is huurder van de geërfde woning; de inspecteur paste daarom bij haar (anders dan bij de twee andere kinderen) de leegwaarderatio van art. 21, achtste lid, SW niet toe omdat zij als mede-eigenaar/huurder zou verkrijgen. De rechtbank oordeelt dat de uiterste wilsbeschikking inhoudelijk overeenkomt met de wettelijke verdeling, zodat op grond van art. 1, vijfde lid, SW belanghebbende een geldvordering verkrijgt en niet een aandeel in de woning. Het beroep is gegrond; de belaste verkrijging wordt verminderd tot €38.358.",
+   "rechtsregel": "Een quasi-wettelijke verdeling die inhoudelijk overeenkomt met de wettelijke verdeling wordt via art. 1, vijfde lid, SW gelijkgesteld; de niet-langstlevende erfgenaam verkrijgt een geldvordering, zodat de uitsluiting van de leegwaarderatio (art. 21, achtste lid, SW) voor de huurder/verkrijger niet aan de orde is.",
+   "wetsartikelen": [
+    "art. 1 SW 1956",
+    "art. 21 SW 1956"
+   ],
+   "belang": "middel",
+   "oordeel": "gegrond",
+   "url": "https://uitspraken.rechtspraak.nl/details?id=ECLI:NL:RBGEL:2024:6970"
+  },
+  {
+   "ecli": "ECLI:NL:RBDHA:2026:15688",
+   "instantie": "Rechtbank Den Haag",
+   "datum": "2026-04-22",
+   "gepubliceerd": "2026-06-18",
+   "onderwerp": "Belastingrente erfbelasting; buitenlandse erfgenaam zonder BSN",
+   "samenvatting": "Aan een in Nieuw-Zeeland wonende erfgename (belaste verkrijging €602.821) zonder BSN is belastingrente (art. 30g AWR) opgelegd omdat de aangifte erfbelasting na de achtmaandstermijn werd ingediend. De vertraging kwam voort uit de tijd die nodig was om via een woonplaatsverklaring een BSN te verkrijgen; de Belastingdienst had op haar website de indruk gewekt dat aangifte pas met BSN mogelijk was. De rechtbank oordeelt dat het in rekening brengen van belastingrente in strijd is met het zorgvuldigheidsbeginsel en vernietigt de rentebeschikking. Beroep gegrond.",
+   "rechtsregel": "Onder bijzondere omstandigheden brengen de abbb (zorgvuldigheidsbeginsel) mee dat geen belastingrente ex art. 30g AWR mag worden geheven wanneer de aangiftevertraging het gevolg is van de door de Belastingdienst gewenste BSN-procedure voor een buitenlandse erfgenaam.",
+   "wetsartikelen": [
+    "art. 30g AWR",
+    "art. 9 Invorderingswet 1990"
+   ],
+   "belang": "middel",
+   "oordeel": "gegrond",
+   "url": "https://uitspraken.rechtspraak.nl/details?id=ECLI:NL:RBDHA:2026:15688"
+  },
+  {
+   "ecli": "ECLI:NL:GHSHE:2026:1079",
+   "instantie": "Gerechtshof 's-Hertogenbosch",
+   "datum": "2026-04-22",
+   "gepubliceerd": "2026-06-09",
+   "onderwerp": "Herroeping schenking; eenmalig verhoogde eigenwoningvrijstelling herleeft niet",
+   "samenvatting": "Een in 2009 benutte eenmalig verhoogde vrijstelling herleeft niet door herroeping van die schenking in 2017. De herroeping is vervulling van een ontbindende voorwaarde zonder terugwerkende kracht (art. 3:38 lid 2 BW); via art. 82a SW resteert slechts het niet-benutte deel van de eigenwoningvrijstelling. Het goedkeurend beleid mist toepassing omdat de herroeping overwegend fiscaal is gemotiveerd. Bij een schenking vrij van belasting blijft de verkrijger belastingplichtig (art. 36 SW).",
+   "rechtsregel": "Herroeping van een herroepelijke schenking heeft geen terugwerkende kracht; de eerder benutte eenmalig verhoogde vrijstelling herleeft niet en wordt via art. 82a SW op een latere eigenwoningvrijstelling in mindering gebracht.",
+   "wetsartikelen": [
+    "art. 33 SW 1956",
+    "art. 82a SW 1956",
+    "art. 36 SW 1956",
+    "art. 3:38 lid 2 BW"
+   ],
+   "belang": "hoog",
+   "oordeel": "ongegrond",
+   "url": "https://uitspraken.rechtspraak.nl/details?id=ECLI:NL:GHSHE:2026:1079"
+  },
+  {
+   "ecli": "ECLI:NL:PHR:2023:461",
+   "instantie": "Parket bij de Hoge Raad",
+   "datum": "2023-04-26",
+   "gepubliceerd": "2026-06-09",
+   "onderwerp": "Conclusie A-G — APV-regime; stichting met verhuurde panden (zaak 21/04929)",
+   "samenvatting": "Conclusie A-G in de APV-zaak die leidt tot HR 1 december 2023 (ECLI:NL:HR:2023:1664). Behandelt of de (niet uitgevoerde) statutaire doelstelling en het uitkeringsverbod ex art. 2:285 lid 3 BW aan toepassing van het APV-regime in de weg staan, wie het vermogen heeft ingebracht, en de verhouding tussen het APV-regime en de fiscale-transparantierechtspraak.",
+   "rechtsregel": "Het uitkeringsverbod van art. 2:285 lid 3 BW en een statutair ideëel doel staan niet in de weg aan toepassing van het APV-regime wanneer feitelijk een meer dan bijkomstig particulier belang wordt gediend.",
+   "wetsartikelen": [
+    "art. 16 SW 1956",
+    "art. 2.14a Wet IB 2001"
+   ],
+   "belang": "middel",
+   "oordeel": "n.v.t.",
+   "url": "https://uitspraken.rechtspraak.nl/details?id=ECLI:NL:PHR:2023:461"
+  },
+  {
+   "ecli": "ECLI:NL:GHDHA:2021:2071",
+   "instantie": "Gerechtshof Den Haag",
+   "datum": "2021-10-20",
+   "gepubliceerd": "2026-06-09",
+   "onderwerp": "APV — afgezonderd particulier vermogen in stichting toegerekend aan erflater",
+   "samenvatting": "Hoger beroep in de APV-zaak (art. 16 SW / art. 2.14a Wet IB 2001) die uitmondt in HR 1 december 2023 (ECLI:NL:HR:2023:1664). Het vermogen van een stichting met vier verhuurde panden wordt als afgezonderd particulier vermogen aan de erflaatster toegerekend; de stichting is geen SBBI en erflaatster beoogde meer dan bijkomstig een particulier belang. Het afzonderingsbegrip ziet ook op het door de stichting zelf aangekochte pand.",
+   "rechtsregel": "Het begrip 'rechtens dan wel in feite, direct of indirect afzonderen van vermogen' (art. 2.14a Wet IB 2001) omvat alle panden, inclusief het door de stichting zelf verworven pand, gelet op doel en strekking (voorkomen heffingsvacuüm).",
+   "wetsartikelen": [
+    "art. 16 SW 1956",
+    "art. 2.14a Wet IB 2001"
+   ],
+   "belang": "middel",
+   "oordeel": "verwijzing",
+   "url": "https://uitspraken.rechtspraak.nl/details?id=ECLI:NL:GHDHA:2021:2071"
+  },
+  {
+   "ecli": "ECLI:NL:RBDHA:2020:7103",
+   "instantie": "Rechtbank Den Haag",
+   "datum": "2020-07-15",
+   "gepubliceerd": "2026-06-09",
+   "onderwerp": "APV — toerekening stichtingsvermogen aan erflater (eerste aanleg)",
+   "samenvatting": "Eerste aanleg in dezelfde APV-zaak als HR 2023:1664. De rechtbank oordeelt dat een stichting met vier verhuurde panden geen SBBI is en dat erflaatster vermogen in de stichting heeft afgezonderd, mede gelet op niet-marktconforme verhuur aan familie, privé-borgstelling en behoud van zeggenschap binnen de familie. Het vermogen wordt aan erflaatster toegerekend (art. 2.14a Wet IB 2001 jo. art. 16 SW).",
+   "rechtsregel": "Bij een familiestichting zonder reële doelstellingsactiviteiten, met afzondering van vermogen en behoud van zeggenschap en bevoordeling binnen de familiekring, is sprake van afgezonderd particulier vermogen dat aan de erflater wordt toegerekend.",
+   "wetsartikelen": [
+    "art. 16 SW 1956",
+    "art. 2.14a Wet IB 2001"
+   ],
+   "belang": "middel",
+   "oordeel": "ongegrond",
+   "url": "https://uitspraken.rechtspraak.nl/details?id=ECLI:NL:RBDHA:2020:7103"
+  },
+  {
+   "ecli": "ECLI:NL:RBGEL:2026:4062",
+   "instantie": "Rechtbank Gelderland",
+   "datum": "2026-05-22",
+   "gepubliceerd": "2026-06-05",
+   "onderwerp": "Erfbelasting: beroep buiten termijn, niet-ontvankelijk",
+   "samenvatting": "In Spanje wonende erfgenaam stelde beroep in tegen een aanslag erfbelasting. Het beroepschrift is na afloop van de zeswekentermijn ter post bezorgd en ontvangen. De rechtbank verklaart het beroep niet-ontvankelijk; aan een inhoudelijke beoordeling van de aanslag komt zij niet toe.",
+   "rechtsregel": "Een buiten de termijn van art. 6:7 Awb ingediend beroepschrift is zonder verschoonbaarheid niet-ontvankelijk, ook bij een in het buitenland wonende belanghebbende.",
+   "wetsartikelen": [
+    "art. 6:7 Awb",
+    "art. 6:9 Awb",
+    "art. 6:11 Awb"
+   ],
+   "belang": "laag",
+   "oordeel": "n.v.t.",
+   "url": "https://uitspraken.rechtspraak.nl/details?id=ECLI:NL:RBGEL:2026:4062"
+  },
+  {
+   "ecli": "ECLI:NL:RBDHA:2026:12696",
+   "instantie": "Rechtbank Den Haag",
+   "datum": "2026-05-13",
+   "gepubliceerd": "2026-06-03",
+   "onderwerp": "Verhoogde EW-vrijstelling: kwijtschelding niet-kwalificerende lening",
+   "samenvatting": "Ouders schonken hun dochter de kwijtschelding van een lening die was verstrekt voor de aanschaf van een eigen woning. De rechtbank oordeelt dat de eenmalig verhoogde vrijstelling eigen woning (art. 33, onder 5, sub c, SW) niet geldt, omdat de lening niet kwalificeert als eigenwoningschuld in de zin van art. 3.119a Wet IB 2001. Het beroep op het vertrouwensbeginsel faalt. Formeel opvallend: het te late beroep is toch ontvankelijk omdat een latere verminderingsbeslissing met rechtsmiddelverwijzing een nieuwe beroepstermijn vermeldde.",
+   "rechtsregel": "Kwijtschelding van een lening die niet kwalificeert als eigenwoningschuld (art. 3.119a Wet IB 2001) valt niet onder de eenmalig verhoogde schenkingsvrijstelling eigen woning van art. 33, onder 5, sub c, SW 1956.",
+   "wetsartikelen": [
+    "art. 33 onder 5 sub c SW 1956",
+    "art. 3.119a Wet IB 2001"
+   ],
+   "belang": "hoog",
+   "oordeel": "ongegrond",
+   "url": "https://uitspraken.rechtspraak.nl/details?id=ECLI:NL:RBDHA:2026:12696"
+  },
+  {
+   "ecli": "ECLI:NL:RBZWB:2026:4355",
+   "instantie": "Rechtbank Zeeland-West-Brabant",
+   "datum": "2026-05-19",
+   "gepubliceerd": "2026-05-28",
+   "onderwerp": "Erfbelasting: verhoogde kindvrijstelling — 50%-eis levensonderhoud niet aangetoond",
+   "samenvatting": "Belanghebbende (erfgenaam van een in Frankrijk wonende moeder) claimde de verhoogde kindvrijstelling voor erfbelasting. De verhoogde vrijstelling vereist dat de erflater meer dan 50% heeft bijgedragen aan het levensonderhoud van de verkrijger. De rechtbank oordeelde dat belanghebbende dit niet aannemelijk had gemaakt, gelet op de vermogenspositie van de moeder (saldi vanaf €23k t/m €112k) en de ontvangen schenkingen. Het beroep is ongegrond.",
+   "rechtsregel": "De verhoogde kindvrijstelling (art. 32 lid 1 sub 4 onder b SW) geldt alleen als de erflater meer dan 50% heeft bijgedragen aan het levensonderhoud van het kind; de bewijslast rust op de verkrijger.",
+   "wetsartikelen": [
+    "art. 32 lid 1 sub 4 SW 1956"
+   ],
+   "belang": "laag",
+   "oordeel": "ongegrond",
+   "url": "https://uitspraken.rechtspraak.nl/details?id=ECLI:NL:RBZWB:2026:4355"
+  },
+  {
+   "ecli": "ECLI:NL:RBZWB:2026:4356",
+   "instantie": "Rechtbank Zeeland-West-Brabant",
+   "datum": "2026-05-19",
+   "gepubliceerd": "2026-05-28",
+   "onderwerp": "Erfbelasting: buitensporige last, beneficiaire aanvaarding en art. 1 EP EVRM",
+   "samenvatting": "Belanghebbende (dochter) ontving bloot eigendom na overlijden moeder (vader heeft vruchtgebruik via oud testament). Zij aanvaardde beneficiair maar stelde dat de erfbelasting een buitensporige last vormde ex art. 1 EP EVRM, nu zij geen middelen had en de vader de erfbelasting weigerde te betalen. De rechtbank oordeelt dat beneficiaire aanvaarding niet afdoet aan de verschuldigdheid van erfbelasting over de bloot eigendomsverkrijging; de situatie met de vader (vruchtgebruiker die zijn deel niet betaalt) is een civielrechtelijke kwestie. Het beroep is slechts gegrond voor de proceskosten in de bezwaarfase.",
+   "rechtsregel": "Beneficiaire aanvaarding van een nalatenschap ontslaat de erfgenaam niet van de verplichting erfbelasting te betalen over zijn verkrijging; het feit dat de vruchtgebruiker zijn aandeel in de erfbelasting niet voldoet, is een civielrechtelijke kwestie die de fiscale verschuldigdheid onverlet laat.",
+   "wetsartikelen": [
+    "art. 1 EP EVRM",
+    "art. 5 SW 1956",
+    "art. 20 SW 1956"
+   ],
+   "belang": "middel",
+   "oordeel": "gegrond",
+   "url": "https://uitspraken.rechtspraak.nl/details?id=ECLI:NL:RBZWB:2026:4356"
+  },
+  {
+   "ecli": "ECLI:NL:GHSHE:2026:1241",
+   "instantie": "Gerechtshof 's-Hertogenbosch",
+   "datum": "2026-05-13",
+   "gepubliceerd": "2026-05-28",
+   "onderwerp": "Schenkbelasting: heffingsbevoegdheid na onjuiste tenaamstelling, beroep op dwaling",
+   "samenvatting": "Na drie aanslagen schenkbelasting met onjuiste tenaamstelling legde de inspecteur — na herhaalde pogingen — een correcte aanslag op. Het hof oordeelt dat de heffingsbevoegdheid nog niet was uitgeput: de eerdere aanslagen met onjuiste tenaamstelling waren ongeldig en doorbrekten de verjaringstermijn niet voor de correcte aanslag. Een beroep op dwaling bij de aan de schenking ten grondslag liggende akte van rectificatie — opgemaakt na overlijden van beide partijen — werd verworpen. Het hoger beroep (bekrachtiging van ECLI:NL:RBZWB:2024:342) is ongegrond.",
+   "rechtsregel": "Herhaalde onjuiste tenaamstelling door een systeemfout doorbreekt de heffingsbevoegdheid niet; de inspecteur die consequent corrigeert en uiteindelijk een penaanslag op naam stelt, handelt niet ernstig onzorgvuldig en de heffingsbevoegdheid is niet uitgeput.",
+   "wetsartikelen": [
+    "art. 66 SW 1956",
+    "art. 66a SW 1956"
+   ],
+   "belang": "middel",
+   "oordeel": "ongegrond",
+   "url": "https://uitspraken.rechtspraak.nl/details?id=ECLI:NL:GHSHE:2026:1241"
+  },
+  {
+   "ecli": "ECLI:NL:RBNHO:2026:2919",
+   "instantie": "Rechtbank Noord-Holland",
+   "datum": "2026-03-19",
+   "gepubliceerd": "2026-05-28",
+   "onderwerp": "APV: kwalificatie Stiftung als afgezonderd particulier vermogen, omkering bewijslast",
+   "samenvatting": "In geschil is of een buitenlandse Stiftung (fonds) kwalificeert als Afgezonderd Particulier Vermogen (APV) in de zin van art. 2.14a Wet IB 2001. De inspecteur stelde dat het vermogen aan de erflater moest worden toegerekend en legde IB/PVV-aanslagen op. De rechtbank (meervoudige kamer) oordeelt dat sprake is van een APV en past partiële omkering en verzwaring van de bewijslast toe wegens gebrekkige informatieverstrekking. De beroepen zijn gegrond, maar op basis van de omgekeerde bewijslast. Dit arrest is relevant voor de SW omdat APV-kwalificatie ook doorwerkt in de erfbelastingsfeer (art. 16 SW).",
+   "rechtsregel": "Een buitenlandse Stiftung zonder aandelen en met afgezonderd vermogen kwalificeert als APV ex art. 2.14a Wet IB 2001; partiële omkering van de bewijslast is mogelijk als de belastingplichtige niet voldoet aan zijn informatieverplichtingen.",
+   "wetsartikelen": [
+    "art. 2.14a Wet IB 2001",
+    "art. 47 AWR",
+    "art. 27e AWR",
+    "art. 16 SW 1956"
+   ],
+   "belang": "middel",
+   "oordeel": "gegrond",
+   "url": "https://uitspraken.rechtspraak.nl/details?id=ECLI:NL:RBNHO:2026:2919"
+  },
+  {
+   "ecli": "ECLI:NL:RBZWB:2024:342",
+   "instantie": "Rechtbank Zeeland-West-Brabant",
+   "datum": "2024-01-24",
+   "gepubliceerd": "2026-05-28",
+   "onderwerp": "Schenkbelasting: leegwaarderatio, verrekening erfdeel, menselijke maat",
+   "samenvatting": "Moeder schonk haar appartement aan haar zoon. De inspecteur legde een aanslag schenkbelasting op zonder toepassing van de leegwaarderatio. Belanghebbende betoogde dat de leegwaarderatio van toepassing was, dat het vaderlijk erfdeel verrekend moest worden, en deed een beroep op de 'menselijke maat'. De rechtbank verwierp alle gronden: de leegwaarderatio geldt niet bij schenkingen van woningen, verrekening van een civielrechtelijk erfdeel is geen fiscale aftrekpost, en de menselijke maat biedt geen zelfstandige grond voor vermindering. Dit vonnis is in hoger beroep bekrachtigd door ECLI:NL:GHSHE:2026:1241.",
+   "rechtsregel": "De leegwaarderatio (art. 17a Uitv.reg. IB) is niet van toepassing bij de waardebepaling van een schenking van een woning; verrekening van een vaderlijk erfdeel met de verschuldigde schenkbelasting is fiscaal niet mogelijk.",
+   "wetsartikelen": [
+    "art. 21 SW 1956",
+    "art. 12 SW 1956"
+   ],
+   "belang": "laag",
+   "oordeel": "ongegrond",
+   "url": "https://uitspraken.rechtspraak.nl/details?id=ECLI:NL:RBZWB:2024:342"
+  },
+  {
+   "ecli": "ECLI:NL:RBNHO:2025:10749",
+   "instantie": "Rechtbank Noord-Holland",
+   "datum": "2025-06-27",
+   "gepubliceerd": "2026-05-20",
+   "onderwerp": "APV/trust VS: BvdB-voorkoming ondanks belastingverdrag",
+   "samenvatting": "Mevrouw X is gerechtigd tot een discretionaire trust (opgericht bij testament) die in de VS niet-fiscaal-transparant is en in Nederland als afgezonderd particulier vermogen (APV) ex art. 2.14a Wet IB 2001 wordt toegerekend. Het belastingverdrag VS-NL biedt geen bescherming tegen de economisch dubbele heffing. De Rechtbank oordeelt dat art. 25b BvdB (voorkoming dubbele belasting) wél van toepassing is, ook al bestaat er een belastingverdrag, omdat dit verdrag geen effectieve voorkoming biedt voor de APV-heffing.",
+   "rechtsregel": "Art. 1 lid 2 BvdB staat niet aan toepassing van art. 25b BvdB in de weg indien een belastingverdrag wel hybride entiteiten adresseert maar geen effectieve voorkoming biedt voor de economisch dubbele heffing die door de APV-toerekening (art. 2.14a Wet IB 2001) ontstaat.",
+   "wetsartikelen": [
+    "art. 2.14a Wet IB 2001",
+    "art. 25b BvdB 2001",
+    "art. 25ba BvdB 2001",
+    "art. 1 lid 2 BvdB 2001",
+    "art. 24 lid 4 belastingverdrag VS-NL"
+   ],
+   "belang": "middel",
+   "oordeel": "gegrond",
+   "url": "https://uitspraken.rechtspraak.nl/details?id=ECLI:NL:RBNHO:2025:10749",
+   "annotatie": "NTFR 2025/1847 (dr. R.W.G. Rouwers); NLF 2025/2346 (Loes van Hulten); V-N 2026/23.10"
+  },
+  {
+   "ecli": "ECLI:NL:GHSHE:2026:1128",
+   "instantie": "Gerechtshof 's-Hertogenbosch",
+   "datum": "2026-04-29",
+   "gepubliceerd": "2026-05-12",
+   "onderwerp": "Schenkbelasting: vrijstelling art. 33/12° SW – schenking door zoons aan vriendin erflater",
+   "samenvatting": "Twee zoons schonken na het overlijden van hun vader elk € 250.000 aan de LAT-relatie van de vader (anderhalf jaar samen, niet samenwonend, niet opgenomen in testament). In een vaststellingsovereenkomst erkenden zoons een 'dringende morele verplichting'. Zij claimden de vrijstelling ex art. 33 aanhef en onder 12° SW (voldoening aan een natuurlijke verbintenis ex art. 6:3 BW). Hof bevestigt oordeel rechtbank: niet aannemelijk dat erflater nakoming door zoons verlangde; de zoons ervoeren zelf ook geen dringende morele verplichting naar objectieve maatstaven. Vaststellingsovereenkomst en subjectieve kwalificatie als 'morele verplichting' zijn onvoldoende om vrijstelling te claimen.",
+   "rechtsregel": "De vrijstelling ex art. 33 aanhef en onder 12° SW vereist dat de zoons zelf naar objectieve maatstaven een dringende morele verplichting (art. 6:3 BW) jegens de begiftigde ervaren; een natuurlijke verbintenis van de erflater vererft niet automatisch, en een vaststellingsovereenkomst met subjectieve kwalificatie volstaat niet.",
+   "wetsartikelen": [
+    "art. 1 lid 7 SW 1956",
+    "art. 33 aanhef en onder 12° SW 1956",
+    "art. 6:3 BW"
+   ],
+   "belang": "middel",
+   "oordeel": "ongegrond",
+   "url": "https://uitspraken.rechtspraak.nl/details?id=ECLI:NL:GHSHE:2026:1128",
+   "vindplaatsen": [
+    "V-N Vandaag 2026/986",
+    "Viditax (FutD) 2026051302"
+   ]
+  },
+  {
+   "ecli": "ECLI:NL:RBDHA:2026:9541",
+   "instantie": "Rechtbank Den Haag",
+   "datum": "2026-04-20",
+   "gepubliceerd": "2026-04-21",
+   "onderwerp": "IB/PVV 2017 erflater: rekening-courant deels oninbaar, WEV onroerende zaken",
+   "samenvatting": "Erfgenamen procederen over IB/PVV-aanslag 2017 van erflater. Rente op rekening-courantvordering deels oninbaar: rechtbank vermindert aanslag. Vervreemdingsverlies aandelen aan stichting niet aannemelijk; WEV onroerende zaken niet lager dan WOZ-waarde aangetoond. Beroep gedeeltelijk gegrond.",
+   "rechtsregel": "Erfgenamen die procederen over IB-aanslag erflater dragen bewijslast voor oninbaarheid rente en lagere WEV; niet volstaan met blote stelling.",
+   "wetsartikelen": [
+    "art. 3.8 Wet IB 2001",
+    "art. 3.94 Wet IB 2001"
+   ],
+   "belang": "laag",
+   "oordeel": "gegrond",
+   "url": "https://uitspraken.rechtspraak.nl/details?id=ECLI:NL:RBDHA:2026:9541"
+  },
+  {
+   "ecli": "ECLI:NL:RBDHA:2026:9542",
+   "instantie": "Rechtbank Den Haag",
+   "datum": "2026-04-20",
+   "gepubliceerd": "2026-04-21",
+   "onderwerp": "IB/PVV 2018 erflater: rekening-courant oninbaar, sfeerovergang onroerende zaak",
+   "samenvatting": "Erfgenamen procederen over IB/PVV 2018 van erflater. Rente op rekening-courant deels oninbaar en vervreemdingsverliezen bij sfeerovergang onroerende zaak aannemelijk gemaakt: aanslag verminderd. Beroep gedeeltelijk gegrond.",
+   "rechtsregel": "Sfeerovergang van onroerende zaak van box 1 naar box 3 kan een vervreemdingsverlies opleveren als de WEV lager is dan de boekwaarde; oninbaarheid rente rekening-courant verlaagt belastbaar inkomen.",
+   "wetsartikelen": [
+    "art. 3.8 Wet IB 2001"
+   ],
+   "belang": "laag",
+   "oordeel": "gegrond",
+   "url": "https://uitspraken.rechtspraak.nl/details?id=ECLI:NL:RBDHA:2026:9542"
+  },
+  {
+   "ecli": "ECLI:NL:RBNNE:2026:1253",
+   "instantie": "Rechtbank Noord-Nederland",
+   "datum": "2026-03-24",
+   "gepubliceerd": "2026-04-16",
+   "onderwerp": "Erfbelasting: mantelzorger-kind; geen partnervrijstelling",
+   "samenvatting": "Kind dat samenleefde met en mantelzorg verleende aan moeder, claimt partnervrijstelling (art. 25 SW). Rechtbank: de wetgever heeft bewust kinderen die ouders verzorgen niet gelijkgesteld aan partners. Die keuze kan aan eiser worden tegengeworpen, ongeacht feitelijke samenwoning. Vordering op moeder niet aannemelijk gemaakt. Beroep ongegrond.",
+   "rechtsregel": "Een kind dat samenleeft met en mantelzorg verleent aan een ouder heeft geen recht op de partnervrijstelling; de wettelijke keuze om kinderen-mantelzorgers niet gelijk te stellen aan partners is rechtsgeldig.",
+   "wetsartikelen": [
+    "art. 25 SW 1956"
+   ],
+   "belang": "middel",
+   "oordeel": "ongegrond",
+   "url": "https://uitspraken.rechtspraak.nl/details?id=ECLI:NL:RBNNE:2026:1253"
+  },
+  {
+   "ecli": "ECLI:NL:RBZWB:2026:1738",
+   "instantie": "Rechtbank Zeeland-West-Brabant",
+   "datum": "2026-03-13",
+   "gepubliceerd": "2026-03-19",
+   "onderwerp": "BOR: gelegateerde cultuurgrond geen ondernemingsvermogen; btw in WEV",
+   "samenvatting": "Belanghebbende verkreeg bij legaat een onverdeeld aandeel in cultuurgrond (gebruik en genot ingebracht in de melkveehouderij-VOF van erflater) en in spaartegoeden/beleggingen. De rechtbank oordeelt dat deze vermogensbestanddelen op het moment van verkrijging geen (gedeelte van een) onderneming vormen in de zin van art. 35c lid 1 onder a SW; latere inbreng in de VOF waartoe belanghebbende toetrad maakt dat niet anders. Art. 3.62 Wet IB 2001 werkt niet door naar de BOR. Bij waardering van de grond (art. 21 lid 1 SW) maakt omzetbelasting deel uit van de waarde in het economische verkeer; aftrekbaarheid bij de koper is een persoonlijke omstandigheid.",
+   "rechtsregel": "Voor de BOR is beslissend of het verkregene op het moment van verkrijging kwalificeert als (gedeelte van een) onderneming; doorschuifbepalingen uit de Wet IB 2001 (art. 3.62) werken niet door naar art. 35b/35c SW en omzetbelasting behoort tot de WEV van art. 21 SW.",
+   "wetsartikelen": [
+    "art. 35b SW 1956",
+    "art. 35c SW 1956",
+    "art. 21 SW 1956",
+    "art. 3.62 Wet IB 2001",
+    "art. 8:42 Awb"
+   ],
+   "belang": "hoog",
+   "oordeel": "ongegrond",
+   "url": "https://uitspraken.rechtspraak.nl/details?id=ECLI:NL:RBZWB:2026:1738"
+  },
+  {
+   "ecli": "ECLI:NL:RBNHO:2026:2226",
+   "instantie": "Rechtbank Noord-Holland",
+   "datum": "2026-01-28",
+   "gepubliceerd": "2026-03-04",
+   "onderwerp": "Erfbelasting NSW-landgoed: invordering na verkoop/onttrekking percelen",
+   "samenvatting": "Eiser erfde in 2001 aandeel in twee NSW-landgoederen; successierecht grotendeels buiten invordering gesteld. In 2019 werden percelen van een landgoed verkocht c.q. onttrokken aan NSW. In 2022 werd aanslag ter invordering erfbelasting opgelegd. Eiser betwist de grondslag; rechtbank oordeelt dat de aanslag terecht is opgelegd: de verminderingsbeschikking van 2009 had alleen betrekking op het terstond invorderbare deel, niet op de totale aanslaggrondslag.",
+   "rechtsregel": "Een verminderingsbeschikking in de zin van de NSW heeft alleen betrekking op het terstond invorderbare deel van de aanslag; de buiten invordering gestelde erfbelasting blijft als aanslaggrondslag in stand en kan alsnog worden ingevorderd bij schending van de NSW-voorwaarden (art. 8/8a NSW).",
+   "wetsartikelen": [
+    "art. 7 NSW",
+    "art. 8 NSW",
+    "art. 8a NSW",
+    "art. 11 AWR"
+   ],
+   "belang": "middel",
+   "oordeel": "ongegrond",
+   "url": "https://uitspraken.rechtspraak.nl/details?id=ECLI:NL:RBNHO:2026:2226"
+  },
+  {
+   "ecli": "ECLI:NL:RBNHO:2026:1201",
+   "instantie": "Rechtbank Noord-Holland",
+   "datum": "2026-01-20",
+   "gepubliceerd": "2026-02-10",
+   "onderwerp": "Erfbelasting: waardering huurrecht, indexatie, metterwoonclausule",
+   "samenvatting": "Erflater verleende eiseres bij huurverklaring een levenslang huurrecht voor €500/maand (niet-zakelijk). Verweerder belastte dit o.g.v. art. 12 SW 1956 als fictieve erfrechtelijke verkrijging. Geschil: (1) moet indexatiemogelijkheid meewegen bij waardering? (2) rechtvaardigt impliciete metterwoonclausule 25% afwaardering? Rechtbank: ja op beide vragen. Verkrijging verminderd van €140.017 naar €96.625. Beroep gegrond.",
+   "rechtsregel": "Bij waardering van een huurrecht ex art. 12 SW 1956 moet rekening worden gehouden met een contractuele indexatiemogelijkheid (huur is periodieke uitkering tot onzeker jaarlijks bedrag); een impliciete metterwoonclausule rechtvaardigt een afwaardering van 25%.",
+   "wetsartikelen": [
+    "art. 12 SW 1956",
+    "art. 21 lid 11 SW 1956",
+    "art. 8 Uitv.besl. SW 1956"
+   ],
+   "belang": "hoog",
+   "oordeel": "gegrond",
+   "url": "https://uitspraken.rechtspraak.nl/details?id=ECLI:NL:RBNHO:2026:1201"
+  },
+  {
+   "ecli": "ECLI:NL:HR:2026:137",
+   "instantie": "Hoge Raad",
+   "datum": "2026-01-30",
+   "gepubliceerd": "2026-01-30",
+   "onderwerp": "BOR bezitseis bij ruziesplitsing: nieuwe indirecte bezitstermijn voor uitgebreid belang",
+   "samenvatting": "Moeder hield via [E] Beheer indirect 49% in [D] BV, die twee ondernemingen dreef ('horen' en 'zien'). Na een ruziesplitsing (2011) verkreeg moeder 100% in 'horen'. In 2013 schonk zij de aandelen aan haar kind en claimde BOR voor de volledige waarde. De Inspecteur paste BOR slechts toe voor 49%. Gerechtshof Arnhem-Leeuwarden (verwijzingshof) oordeelde dat 'horen' en 'zien' twee afzonderlijke objectieve ondernemingen vormden; HR laat dit feitelijke oordeel in stand. De indirecte bezitstermijn van art. 35d lid 1 letter c SW vangt opnieuw aan voor het bij de splitsing uitgebreide procentuele belang. Art. 9 lid 2 URSE biedt alleen verzachting van de directe bezitseis en is niet van toepassing op de indirecte bezitseis.",
+   "rechtsregel": "Bij uitbreiding van de procentuele gerechtigdheid in een objectieve onderneming (ook door juridische splitsing) begint voor het uitgebreide deel een nieuwe indirecte bezitstermijn te lopen ex art. 35d lid 1 letter c SW; art. 9 lid 2 URSE geldt uitsluitend voor de directe bezitseis.",
+   "wetsartikelen": [
+    "art. 35b SW 1956",
+    "art. 35c lid 1 letter a SW 1956",
+    "art. 35d lid 1 letter c SW 1956",
+    "art. 9 lid 2 URSE"
+   ],
+   "belang": "hoog",
+   "oordeel": "ongegrond",
+   "url": "https://uitspraken.rechtspraak.nl/details?id=ECLI:NL:HR:2026:137",
+   "vindplaatsen": [
+    "BNB 2026/49 m.nt. I.J.F.A. van Vijfeijken",
+    "V-N 2026/7.13",
+    "NTFR 2026/234 m.nt. Y. Saïdi",
+    "NJB 2026/366"
+   ]
+  },
+  {
+   "ecli": "ECLI:NL:HR:2023:1664",
+   "instantie": "Hoge Raad",
+   "datum": "2023-12-01",
+   "gepubliceerd": "2023-12-01",
+   "onderwerp": "APV: stichtingsvermogen toegerekend aan erflaatster; stelplicht",
+   "samenvatting": "Erflaatster was medebestuurder van een stichting met vier panden die haar statutaire (culturele) doel feitelijk niet nastreefde. Hof en Hoge Raad merken het stichtingsvermogen aan als afgezonderd particulier vermogen (art. 2.14a Wet IB 2001) dat via art. 16 SW krachtens erfrecht door de zoon/enig erfgenaam wordt verkregen. Het cassatiemiddel dat het vermogen deels door belanghebbende zelf zou zijn afgezonderd faalt, omdat dit niet in feitelijke instanties (subsidiair) is aangevoerd; de stelplicht ligt bij belanghebbende.",
+   "rechtsregel": "Toerekening van APV-vermogen aan de erflater blijft in cassatie in stand wanneer een gedeeltelijke eigen inbreng niet in feitelijke instanties is gesteld; de stelplicht daarvoor rust op de belanghebbende.",
+   "wetsartikelen": [
+    "art. 16 SW 1956",
+    "art. 2.14a Wet IB 2001"
+   ],
+   "belang": "hoog",
+   "oordeel": "ongegrond",
+   "url": "https://uitspraken.rechtspraak.nl/details?id=ECLI:NL:HR:2023:1664"
+  },
+  {
+   "ecli": "ECLI:NL:RBGEL:2023:4042",
+   "instantie": "Rechtbank Gelderland",
+   "datum": "2023-07-17",
+   "gepubliceerd": "2023-08-01",
+   "onderwerp": "BOR: vastgoedverhuur geen materiële onderneming; vpb-latentie",
+   "samenvatting": "Erfrechtelijke verkrijging van aandelen in een vastgoed-BV. De rechtbank past de arbeid-plus/rendement-plus-toets toe en oordeelt dat de verhuuractiviteiten (beheer, toezicht, klein onderhoud, debiteurenbeheer) normaal vermogensbeheer niet te boven gaan; de BOR is niet van toepassing. Het beroep is wel gegrond omdat de inspecteur voor één pand een te lage vpb-latentie hanteerde.",
+   "rechtsregel": "Werkzaamheden die horen bij het normale beheer van onroerende zaken leveren geen materiële onderneming op voor de BOR, ook niet bij eigen personeel en intensief huurdercontact.",
+   "wetsartikelen": [
+    "art. 35b SW 1956",
+    "art. 35c SW 1956",
+    "art. 3.2 Wet IB 2001"
+   ],
+   "belang": "middel",
+   "oordeel": "gegrond",
+   "url": "https://uitspraken.rechtspraak.nl/details?id=ECLI:NL:RBGEL:2023:4042"
+  },
+  {
+   "ecli": "ECLI:NL:HR:2008:BD6835",
+   "instantie": "Hoge Raad",
+   "datum": "2008-07-11",
+   "gepubliceerd": "2013-04-05",
+   "onderwerp": "Schenkingsrecht: beroep niet-ontvankelijk (verkeerde procespartij)",
+   "samenvatting": "Beroep ingesteld door een ander dan degene die bezwaar heeft gemaakt en tot wie de uitspraak op bezwaar was gericht, is niet-ontvankelijk. Formeel belastingrecht (procesrecht). Oud arrest opnieuw gepubliceerd.",
+   "rechtsregel": "Het beroep in een schenkingsrechtzaak is niet-ontvankelijk als het wordt ingesteld door een andere belastingplichtige dan degene die bezwaar heeft gemaakt.",
+   "wetsartikelen": [
+    "art. 6:13 Awb",
+    "art. 26a AWR"
+   ],
+   "belang": "laag",
+   "oordeel": "n.v.t.",
+   "url": "https://uitspraken.rechtspraak.nl/details?id=ECLI:NL:HR:2008:BD6835"
+  },
+  {
+   "ecli": "ECLI:NL:HR:2026:669",
+   "instantie": "Hoge Raad",
+   "datum": "2026-04-17",
+   "kern": "Kind dat mantelzorg verleent heeft geen recht op de partnervrijstelling erfbelasting. Goederenrechtelijke aanspraak van legitimarissen is geen aftrekbare schuld van de nalatenschap. Beroep in cassatie ongegrond.",
+   "wetsartikelen": [
+    "art. 1a lid 4 SW 1956 (oud)",
+    "art. 32 lid 1 onderdeel 4° SW 1956",
+    "art. 128 Overgangswet NBW"
+   ],
+   "tags": [
+    "Vrijstellingen",
+    "Nalatenschap"
+   ],
+   "oordeel": "tegen",
+   "praktijkbelang": "HOOG",
+   "praktijkbelang_toelichting": "Definitieve uitspraak Hoge Raad over reikwijdte partnervrijstelling voor mantelzorger. Bevestigt dat enkel juridisch gelijkgestelden aanspraak kunnen maken op partnervrijstelling; mantelzorg alleen is onvoldoende. Goederenrechtelijke legitimarisaanspraak kwalificeert niet als schuld van de nalatenschap."
+  },
+  {
+   "ecli": "ECLI:NL:RBNNE:2026:1208",
+   "instantie": "Rechtbank Noord-Nederland",
+   "datum": "2026-04-16",
+   "kern": "BOR directe bezitseis bij aandeleninkoop door BV: moeder hield dezelfde 600 certificaten al langer dan 5 jaar; de procentuele stijging (van 6% naar 7,55%) door inkoop eigen aandelen door de BV zelf doet geen nieuwe bezitstermijn ingaan. BOR van toepassing op de volle schenking.",
+   "wetsartikelen": [
+    "art. 35c lid 1 sub c SW 1956",
+    "art. 35d lid 1 sub c SW 1956"
+   ],
+   "tags": [
+    "BOR",
+    "Schenkbelasting",
+    "Bedrijfsopvolging"
+   ],
+   "oordeel": "voor",
+   "praktijkbelang": "HOOG",
+   "praktijkbelang_toelichting": "Tegenstrijdig met ECLI:NL:RBDHA:2026:8337: Rechtbank Noord-Nederland oordeelt dat inkoop eigen aandelen door de BV geen nieuwe bezitstermijn doet ingaan voor de reeds >5 jaar gehouden certificaten, omdat de schenker geen nieuwe aandelen heeft verkregen. Beide uitspraken betreffen dezelfde rechtsvraag met tegengestelde uitkomst."
+  },
+  {
+   "ecli": "ECLI:NL:RBDHA:2026:8337",
+   "instantie": "Rechtbank Den Haag",
+   "datum": "2026-04-07",
+   "kern": "BOR indirecte bezitseis bij aandeleninkoop door werkvennootschap: holding had indirect 80% in de onderneming; na inkoop eigen aandelen door werkvennootschap steeg dit procentueel naar 100%. Voor de extra 20% begon een nieuwe indirecte bezitstermijn. BOR slechts van toepassing voor 80%.",
+   "wetsartikelen": [
+    "art. 35c lid 1 sub c SW 1956",
+    "art. 35d lid 1 sub c SW 1956"
+   ],
+   "tags": [
+    "BOR",
+    "Schenkbelasting",
+    "Bedrijfsopvolging"
+   ],
+   "oordeel": "tegen",
+   "praktijkbelang": "HOOG",
+   "praktijkbelang_toelichting": "Tegenstrijdig met ECLI:NL:RBNNE:2026:1208 over directe bezitseis: Rechtbank Den Haag oordeelt dat een aandeleninkoop door de werkvennootschap een nieuwe indirecte bezitstermijn doet ingaan voor het procentueel uitgebreide belang. Conflict vraagt om verduidelijking door hogere rechter."
+  },
+  {
+   "ecli": "ECLI:NL:RBDHA:2026:8355",
+   "instantie": "Rechtbank Den Haag",
+   "datum": "2026-04-07",
+   "kern": "Verhuur van voormalig modemagazijn te Amsterdam door BV kwalificeert als normaal vermogensbeheer en niet als een onderneming. BOR niet van toepassing op het geërfde minderheidsbelang (31%). Aandelenwaarde vastgesteld met 10% incourantheidsafslag wegens minderheidsbelang.",
+   "wetsartikelen": [
+    "art. 35b SW 1956",
+    "art. 35c SW 1956"
+   ],
+   "tags": [
+    "BOR",
+    "Erfbelasting"
+   ],
+   "oordeel": "tegen",
+   "praktijkbelang": "MIDDEL",
+   "praktijkbelang_toelichting": "Bevestigt vaste lijn dat verhuur van vastgoed als normaal vermogensbeheer kwalificeert en daarmee buiten de BOR valt. Opvallend is de toegepaste incourantheidsafslag van 10% op de aandelenwaarde wegens het minderheidsbelang."
+  },
+  {
+   "ecli": "ECLI:NL:RBDHA:2026:8356",
+   "instantie": "Rechtbank Den Haag",
+   "datum": "2026-04-07",
+   "kern": "Companion-zaak bij ECLI:NL:RBDHA:2026:8355 (zaaknr. SGR 25/3031): zelfde feitencomplex, andere erfgenaam. Verhuur modemagazijn Amsterdam is geen onderneming; BOR niet van toepassing.",
+   "wetsartikelen": [
+    "art. 35b SW 1956",
+    "art. 35c SW 1956"
+   ],
+   "tags": [
+    "BOR",
+    "Erfbelasting"
+   ],
+   "oordeel": "tegen",
+   "praktijkbelang": "LAAG",
+   "praktijkbelang_toelichting": "Companion-zaak bij ECLI:NL:RBDHA:2026:8355; geen zelfstandige rechtsontwikkeling. Zie hoofdzaak voor de inhoudelijke analyse."
+  },
+  {
+   "ecli": "ECLI:NL:RBDHA:2026:8341",
+   "instantie": "Rechtbank Den Haag",
+   "datum": "2026-04-07",
+   "kern": "Companion-zaak bij ECLI:NL:RBDHA:2026:8355 (zaaknr. SGR 25/4506): zelfde feitencomplex, andere erfgenaam. Verhuur modemagazijn Amsterdam is geen onderneming; BOR niet van toepassing.",
+   "wetsartikelen": [
+    "art. 35b SW 1956",
+    "art. 35c SW 1956"
+   ],
+   "tags": [
+    "BOR",
+    "Erfbelasting"
+   ],
+   "oordeel": "tegen",
+   "praktijkbelang": "LAAG",
+   "praktijkbelang_toelichting": "Companion-zaak bij ECLI:NL:RBDHA:2026:8355; geen zelfstandige rechtsontwikkeling. Zie hoofdzaak voor de inhoudelijke analyse."
+  },
+  {
+   "ecli": "ECLI:NL:GHDHA:2026:114",
+   "instantie": "Gerechtshof Den Haag",
+   "datum": "2026-01-29",
+   "kern": "BOR-bezitsvereiste bij erfrechtelijke verkrijging aandelenbelang: moeder hield 49% langer dan 5 jaar en verkreeg 51% via erfrecht in 2016; schenking in 2020 valt voor het erfrechtelijk verkregen deel buiten de 5-jaarstermijn. BOR beperkt tot het oorspronkelijk gehouden 49%-belang.",
+   "wetsartikelen": [
+    "art. 35c lid 1 sub c SW 1956",
+    "art. 35d lid 1 sub c SW 1956"
+   ],
+   "tags": [
+    "BOR",
+    "Schenkbelasting",
+    "Bedrijfsopvolging"
+   ],
+   "oordeel": "tegen",
+   "praktijkbelang": "HOOG",
+   "praktijkbelang_toelichting": "Bevestigt restrictieve uitleg van de dubbele bezitseis: voor elk afzonderlijk verkregen onderdeel van het aandelenbelang loopt een eigen bezitstermijn. Essentieel voor estate planning bij overlijden van een medeaandeelhouder gevolgd door een schenking binnen 5 jaar."
+  },
+  {
+   "ecli": "ECLI:NL:RBNHO:2026:5134",
+   "instantie": "Rechtbank Noord-Holland",
+   "datum": "2026-04-21",
+   "gepubliceerd": "2026-07-07",
+   "onderwerp": "Aanslagtermijn erfbelasting; integrale proceskostenvergoeding",
+   "samenvatting": "Erflaatster overleed op 22 juli 2020; kort daarvoor (30 juni 2020) was het finaal wederkerig verrekenbeding ingetrokken. In geschil is of de aanslag erfbelasting (uiteindelijk verminderd tot een verkrijging van EUR 126.984) binnen de wettelijke aanslagtermijn is opgelegd, mede gelet op verleend uitstel. Tevens verzoekt belanghebbende om integrale vergoeding van de bezwaarkosten. De rechtbank oordeelt dat de aanslag tijdig is opgelegd en dat geen recht bestaat op een integrale kostenvergoeding.",
+   "rechtsregel": "De aanslagtermijn voor de erfbelasting wordt verlengd met de duur van het verleende uitstel voor het doen van aangifte; er bestaat geen recht op integrale proceskostenvergoeding zonder dat sprake is van tegen beter weten in handelen of ernstige onzorgvuldigheid van de inspecteur.",
+   "wetsartikelen": [
+    "art. 66 SW 1956",
+    "art. 45 SW 1956"
+   ],
+   "belang": "middel",
+   "oordeel": "ongegrond",
+   "url": "https://uitspraken.rechtspraak.nl/details?id=ECLI:NL:RBNHO:2026:5134"
+  },
+  {
+   "ecli": "ECLI:NL:RBDHA:2024:20487",
+   "instantie": "Rechtbank Den Haag",
+   "datum": "2024-12-05",
+   "gepubliceerd": "2024-12-11",
+   "onderwerp": "BOR schenkbelasting; bezitsvereiste art. 35d na juridische splitsing",
+   "samenvatting": "Moeder schonk op 7 september 2020 - dezelfde dag als een juridische splitsing - alle aandelen in de afgesplitste vennootschap aan haar dochter, met een beroep op de bedrijfsopvolgingsregeling (BOR). De inspecteur beperkte de BOR tot 49%, omdat moeder 51% van de aandelen (afkomstig van de in 2017 overleden vader) binnen vijf jaar voor de schenking had verkregen en daardoor voor dat deel niet aan het bezitsvereiste van art. 35d, lid 1, onderdeel c SW voldeed. De rechtbank verklaart het beroep ongegrond. In hoger beroep bevestigd (ECLI:NL:GHDHA:2026:114).",
+   "rechtsregel": "Voor de BOR moet per aandelenpakket aan het bezitsvereiste van art. 35d SW zijn voldaan; aandelen die de schenker binnen de bezitstermijn heeft verkregen (hier via toedeling na overlijden van de mede-aandeelhouder) delen niet in de voorwaardelijke vrijstelling, ook niet na een daaropvolgende juridische splitsing.",
+   "wetsartikelen": [
+    "art. 35b SW 1956",
+    "art. 35d SW 1956"
+   ],
+   "belang": "middel",
+   "oordeel": "ongegrond",
+   "url": "https://uitspraken.rechtspraak.nl/details?id=ECLI:NL:RBDHA:2024:20487"
+  },
+  {
+   "ecli": "ECLI:NL:GHSHE:2021:1363",
+   "instantie": "Gerechtshof 's-Hertogenbosch",
+   "datum": "2021-05-06",
+   "gepubliceerd": "2021-05-28",
+   "onderwerp": "Vernietiging schenking wegens dwaling; vermindering schenkbelasting",
+   "samenvatting": "Verwijzingszaak na HR 10 januari 2020, ECLI:NL:HR:2020:1. Belanghebbende en zijn oudtante hebben de schenkingsovereenkomst (schenking 2015) vernietigd omdat zij dwaalden over de fiscale gevolgen. Belanghebbende verzocht om vermindering van de aanslag schenkbelasting. Het hof oordeelt dat de inspecteur niet aannemelijk heeft gemaakt dat de vernietiging slechts is voorgewend, en vermindert de aanslag tot nihil. (Uitspraak uit 2021; metadata verscheen opnieuw in de scan.)",
+   "rechtsregel": "Een civielrechtelijk geldige vernietiging van een schenkingsovereenkomst wegens dwaling werkt door voor de schenkbelasting, tenzij de inspecteur aannemelijk maakt dat de vernietiging enkel is voorgewend om belasting te ontgaan.",
+   "wetsartikelen": [
+    "art. 53 SW 1956",
+    "art. 1 SW 1956"
+   ],
+   "belang": "middel",
+   "oordeel": "gegrond",
+   "url": "https://uitspraken.rechtspraak.nl/details?id=ECLI:NL:GHSHE:2021:1363"
+  },
+  {
+   "ecli": "ECLI:NL:RBZWB:2026:5958",
+   "instantie": "Rechtbank Zeeland-West-Brabant",
+   "datum": "2026-07-03",
+   "gepubliceerd": "2026-07-17",
+   "onderwerp": "BOR geweigerd: vastgoedexploitatie geen materiële onderneming",
+   "samenvatting": "Vader schonk in 2020 alle aandelen in zijn BV (portefeuille van enkele historische kamerverhuurpanden, in 2000 geruisloos ingebracht) aan zijn zoon; belaste verkrijging € 2.011.499. De rechtbank oordeelt dat niet aannemelijk is gemaakt dat de BV ten tijde van de schenking een onderneming dreef in de zin van art. 3.2 Wet IB 2001: het rendement-plus-criterium is niet vervuld, zodat arbeid-plus geen behandeling meer behoeft. Het subsidiaire beroep op onderdeel 5 van de interne Praktijkhandreiking bedrijfsopvolging vastgoedexploitanten (1 juni 2016) faalt: die handreiking is weliswaar bindend beleid dat niet door latere wetgeving of jurisprudentie opzij wordt gezet, maar eist dat de activiteiten sinds de geruisloze inbreng ongewijzigd zijn — en dat heeft belanghebbende tegenover de gemotiveerde betwisting niet onderbouwd.",
+   "rechtsregel": "Vastgoedexploitatie kwalificeert voor de BOR alleen als onderneming bij cumulatieve arbeid-plus én rendement-plus op het schenkingsmoment; een beroep op de Praktijkhandreiking vastgoedexploitanten slaagt alleen als bewezen wordt dat de activiteiten sinds de eerdere geruisloze inbreng ongewijzigd zijn.",
+   "wetsartikelen": [
+    "art. 35b SW 1956",
+    "art. 35c lid 1 onder c SW 1956",
+    "art. 3.2 Wet IB 2001",
+    "art. 4.17c Wet IB 2001"
+   ],
+   "belang": "hoog",
+   "oordeel": "ongegrond",
+   "url": "https://uitspraken.rechtspraak.nl/details?id=ECLI:NL:RBZWB:2026:5958"
+  },
+  {
+   "ecli": "ECLI:NL:RBDHA:2026:19799",
+   "instantie": "Rechtbank Den Haag",
+   "datum": "2026-07-09",
+   "gepubliceerd": "2026-07-23",
+   "onderwerp": "Verschoonbare termijnoverschrijding bezwaar aanslag erfbelasting",
+   "samenvatting": "De aanslag erfbelasting (legaat, overlijden 2020) is aan de notaris/executeur als contactpersoon gestuurd; de notaris stuurde deze niet door aan de legataris. De legataris raakte pas via de aanmaning op de hoogte en maakte vrijwel direct bezwaar. De rechtbank oordeelt dat de termijnoverschrijding verschoonbaar is (art. 6:11 Awb): omdat de verkrijger de notaris niet zelf heeft aangesteld, kan het niet-doorsturen haar niet worden toegerekend. Uitspraak op bezwaar vernietigd; inspecteur moet opnieuw op het bezwaar beslissen.",
+   "rechtsregel": "Wanneer de aanslag erfbelasting aan de door de erflater aangewezen notaris/executeur is gezonden en deze de aanslag niet aan de verkrijger doorstuurt, is de daaropvolgende termijnoverschrijding van de verkrijger verschoonbaar (art. 6:11 Awb), nu het handelen van de niet door haar aangestelde notaris niet aan haar kan worden toegerekend.",
+   "wetsartikelen": [
+    "art. 6:11 Awb",
+    "SW 1956 (aanslag erfbelasting)"
+   ],
+   "belang": "middel",
+   "oordeel": "gegrond",
+   "url": "https://uitspraken.rechtspraak.nl/details?id=ECLI:NL:RBDHA:2026:19799"
+  }
+ ],
+ "dagelijkse_scan": {
+  "datum": "2026-07-23",
+  "gevonden": 136,
+  "relevant": 1,
+  "significant": 0,
+  "verwerkt_in_kennisbasis": [],
+  "toelichting": "Scan 2026-07-24 over modified=2026-07-23. 136 belastingrecht-uitspraken via subject-filter. Keyword-filter gaf 4 hits: HR:2026:137 (BOR/art.35d) reeds in store; PHR:2023:573 vals-positief ('erven' als deelstring, betreft fiscale eenheid Vpb); PHR:2015:2204 herpublicatie oude ANBI-intrekkingsconclusie uit 2015 (buiten schenk-/erf-kern, niet toegevoegd); RBDHA:2026:19799 nieuw en relevant (formeel recht rond aanslag erfbelasting). Belang middel, niet significant -> geen kennisbasis-update."
+ }
+};
+
+function getInstantieType(inst) {
+  if (!inst) return 'rb';
+  inst = inst.toLowerCase();
+  if (inst.includes('hoge raad')) return 'hr';
+  if (inst.includes('gerechtshof')) return 'hof';
+  return 'rb';
+}
+
+function getInstantieLabel(inst) {
+  if (!inst) return '?';
+  if (inst.toLowerCase().includes('hoge raad')) return 'HR';
+  if (inst.toLowerCase().includes('gerechtshof')) return inst.replace('Gerechtshof ', 'Hof ');
+  return inst.replace('Rechtbank ', 'Rb. ');
+}
+
+function formatDatum(d) {
+  if (!d) return '';
+  const parts = d.split('-');
+  const months = ['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'];
+  return parseInt(parts[2]) + ' ' + months[parseInt(parts[1])-1] + ' ' + parts[0];
+}
+
+function renderBanner() {
+  const scan = UITSPRAKEN_DATA.dagelijkse_scan;
+  const lastUpdate = UITSPRAKEN_DATA.laatste_update ? UITSPRAKEN_DATA.laatste_update.slice(0,10) : '';
+  document.getElementById('laatste-update').textContent = 'Update: ' + lastUpdate;
+  document.getElementById('scan-banner').innerHTML =
+    '<div class="scan-badge"><div class="num">' + scan.gevonden + '</div><div class="lbl">Belastingrecht</div></div>' +
+    '<div class="scan-divider"></div>' +
+    '<div class="scan-badge"><div class="num" style="color:var(--blauw-licht)">' + scan.relevant + '</div><div class="lbl">Schenk-/Erfbelasting</div></div>' +
+    '<div class="scan-divider"></div>' +
+    '<div class="scan-badge"><div class="num" style="color:var(--goud)">' + scan.significant + '</div><div class="lbl">Significant</div></div>' +
+    '<div class="scan-divider"></div>' +
+    '<div class="scan-badge"><div class="num" style="color:var(--tekst-sub)">' + UITSPRAKEN_DATA.uitspraken.length + '</div><div class="lbl">Totaal in database</div></div>' +
+    '<div class="scan-info"><strong>Scan datum:</strong> ' + formatDatum(scan.datum) + '<br>via subject-filter belastingrecht</div>';
+}
+
+function renderCards(filtered) {
+  const container = document.getElementById('cards-container');
+  document.getElementById('count-info').textContent = filtered.length + ' van ' + UITSPRAKEN_DATA.uitspraken.length + ' uitspraken';
+  if (filtered.length === 0) {
+    container.innerHTML = '<div class="geen-resultaten">Geen uitspraken gevonden met deze filters.</div>';
+    return;
+  }
+  container.innerHTML = filtered.map(function(u, i) {
+    const instType = getInstantieType(u.instantie);
+    const instLabel = getInstantieLabel(u.instantie);
+    const belang = (u.belang || u.praktijkbelang || '').toLowerCase();
+    const oordeel = (u.oordeel || '').toLowerCase();
+    const isSig = belang === 'hoog';
+    const isNieuw = !!u._nieuw;
+    const artikelen = (u.wetsartikelen || u.tags || []).slice(0,3).join(' · ');
+    const samenvatting = u.samenvatting || u.kern || '';
+    const rechtsregel = u.rechtsregel || u.praktijkbelang_toelichting || '';
+    const vindplaatsen = u.vindplaatsen || (u.annotatie ? [u.annotatie] : []);
+    return '<div class="card" id="card-' + i + '">' +
+      '<div class="card-header" onclick="toggleCard(' + i + ')">' +
+      '<span class="badge-instantie instantie-' + instType + '">' + instLabel + '</span>' +
+      '<div class="card-body">' +
+      '<div class="card-ecli">' + u.ecli + '</div>' +
+      '<div class="card-onderwerp">' + (u.onderwerp || '') + '</div>' +
+      '<div class="card-meta">' +
+      (isSig ? '<span class="badge-sig">&#9733; Significant</span>' : '') +
+      (isNieuw ? '<span class="badge-nieuw">Nieuw</span>' : '') +
+      '<span class="badge-belang belang-' + belang + '">' + (belang || '&mdash;') + '</span>' +
+      (oordeel && oordeel !== 'n.v.t.' ? '<span class="badge-oordeel oordeel-' + oordeel + '">' + oordeel + '</span>' : '') +
+      '<span class="card-datum">' + formatDatum(u.datum) + '</span>' +
+      '</div>' +
+      (artikelen ? '<div class="card-artikelen">' + artikelen + '</div>' : '') +
+      '</div>' +
+      '<div class="card-chevron">&#8250;</div>' +
+      '</div>' +
+      '<div class="card-expand">' +
+      (samenvatting ? '<div class="expand-section"><div class="expand-label">Samenvatting</div><div class="expand-text">' + samenvatting + '</div></div>' : '') +
+      (rechtsregel ? '<div class="expand-section"><div class="expand-label">Rechtsregel / Praktijkbelang</div><div class="rechtsregel-box">' + rechtsregel + '</div></div>' : '') +
+      (vindplaatsen.length > 0 ? '<div class="expand-section"><div class="expand-label">Vindplaatsen</div><div class="expand-text">' + vindplaatsen.join(' · ') + '</div></div>' : '') +
+      (u.annotatie ? '<div class="annotatie-box">&#128218; ' + u.annotatie + '</div>' : '') +
+      '<a class="expand-link" href="' + u.url + '" target="_blank">&#8599; Bekijk op rechtspraak.nl</a>' +
+      '</div></div>';
+  }).join('');
+}
+
+function toggleCard(i) {
+  document.getElementById('card-' + i).classList.toggle('open');
+}
+
+function applyFilters() {
+  const inst = document.getElementById('f-instantie').value.toLowerCase();
+  const belang = document.getElementById('f-belang').value.toLowerCase();
+  const oordeel = document.getElementById('f-oordeel').value.toLowerCase();
+  const zoek = document.getElementById('f-zoek').value.toLowerCase();
+  const filtered = UITSPRAKEN_DATA.uitspraken.filter(function(u) {
+    if (inst) {
+      const iName = (u.instantie || '').toLowerCase();
+      if (!iName.includes(inst)) return false;
+    }
+    const b = (u.belang || u.praktijkbelang || '').toLowerCase();
+    if (belang && !b.startsWith(belang)) return false;
+    const o = (u.oordeel || '').toLowerCase();
+    if (oordeel && o !== oordeel) return false;
+    if (zoek) {
+      const tekst = [u.ecli, u.onderwerp, u.samenvatting, u.kern, u.rechtsregel,
+        (u.wetsartikelen||[]).join(' '), (u.tags||[]).join(' ')].join(' ').toLowerCase();
+      if (!tekst.includes(zoek)) return false;
+    }
+    return true;
+  });
+  renderCards(filtered);
+}
+
+function resetFilters() {
+  document.getElementById('f-instantie').value = '';
+  document.getElementById('f-belang').value = '';
+  document.getElementById('f-oordeel').value = '';
+  document.getElementById('f-zoek').value = '';
+  applyFilters();
+}
+
+document.getElementById('f-instantie').addEventListener('change', applyFilters);
+document.getElementById('f-belang').addEventListener('change', applyFilters);
+document.getElementById('f-oordeel').addEventListener('change', applyFilters);
+document.getElementById('f-zoek').addEventListener('input', applyFilters);
+
+renderBanner();
+applyFilters();
+</script>
+</body>
+</html>
