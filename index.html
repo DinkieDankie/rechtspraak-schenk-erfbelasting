@@ -20,6 +20,10 @@ h1{font-size:22px;margin:0 0 4px}
 .filters{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px}
 select,input[type=search]{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
 input[type=search]{flex:1;min-width:200px}
+.datefilters{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px;font-size:13px;color:var(--muted)}
+.datefilters label{display:flex;align-items:center;gap:6px}
+input[type=date]{font:inherit;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
+button.reset{font:inherit;font-size:13px;padding:7px 12px;border:1px solid var(--line);background:#fbfcfd;border-radius:8px;cursor:pointer;color:var(--accent)}
 .count{color:var(--muted);font-size:13px;margin-bottom:12px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:15px 16px;margin-bottom:11px}
 .card h3{margin:0 0 6px;font-size:16px}
@@ -62,6 +66,12 @@ a.ext:hover{background:#eef3f8}
   <select id="f-belang"><option value="">Alle belang</option><option>hoog</option><option>middel</option><option>laag</option></select>
   <select id="f-oordeel"><option value="">Alle oordelen</option></select>
   <input type="search" id="f-q" placeholder="Zoek in onderwerp, samenvatting, rechtsregel, ECLI, wetsartikel&hellip;">
+</div>
+<div class="datefilters">
+  <select id="f-dsoort"><option value="datum">Datum uitspraak</option><option value="gepubliceerd">Datum publicatie</option></select>
+  <label>vanaf <input type="date" id="f-van"></label>
+  <label>tot en met <input type="date" id="f-tot"></label>
+  <button type="button" class="reset" id="f-reset">Wis filters</button>
 </div>
 <div class="count" id="count"></div>
 <div id="list"></div>
@@ -119,11 +129,20 @@ function render(){
   const fi=document.getElementById('f-inst').value,
         fb=document.getElementById('f-belang').value,
         fo=document.getElementById('f-oordeel').value,
-        q=document.getElementById('f-q').value.toLowerCase().trim();
+        q=document.getElementById('f-q').value.toLowerCase().trim(),
+        ds=document.getElementById('f-dsoort').value,
+        dv=document.getElementById('f-van').value,
+        dt=document.getElementById('f-tot').value;
   const out = rows.filter(u=>{
     if(fi && u.instantie!==fi) return false;
     if(fb && u.belang!==fb) return false;
     if(fo && u.oordeel!==fo) return false;
+    if(dv || dt){
+      const d=String(u[ds]||'').slice(0,10);
+      if(!d) return false;
+      if(dv && d<dv) return false;
+      if(dt && d>dt) return false;
+    }
     if(q){
       const hay=[u.ecli,u.onderwerp,u.samenvatting,u.rechtsregel,u.instantie,u.zaaknummer,(u.wetsartikelen||[]).join(' ')].join(' ').toLowerCase();
       if(!hay.includes(q)) return false;
@@ -139,8 +158,13 @@ document.getElementById('list').addEventListener('click', e=>{
     e.target.parentElement.parentElement.querySelector('.rr').classList.toggle('open');
   }
 });
-['f-inst','f-belang','f-oordeel','f-q'].forEach(id=>{
+['f-inst','f-belang','f-oordeel','f-q','f-dsoort','f-van','f-tot'].forEach(id=>{
   document.getElementById(id).addEventListener('input', render);
+});
+document.getElementById('f-reset').addEventListener('click', ()=>{
+  ['f-inst','f-belang','f-oordeel','f-q','f-van','f-tot'].forEach(id=>{document.getElementById(id).value='';});
+  document.getElementById('f-dsoort').value='datum';
+  render();
 });
 render();
 </script>
