@@ -69,8 +69,23 @@ a.ext:hover{background:#eef3f8}
 </div>
 <div class="datefilters">
   <select id="f-dsoort"><option value="datum">Datum uitspraak</option><option value="gepubliceerd">Datum publicatie</option></select>
+  <select id="f-periode" title="Snel filteren op periode">
+    <option value="">Alle periodes</option>
+    <option value="1m">Laatste maand</option>
+    <option value="3m">Laatste 3 maanden</option>
+    <option value="6m">Laatste 6 maanden</option>
+    <option value="12m">Laatste jaar</option>
+    <option value="ytd">Dit jaar</option>
+  </select>
   <label>vanaf <input type="date" id="f-van"></label>
   <label>tot en met <input type="date" id="f-tot"></label>
+  <label>sorteer
+    <select id="f-sort">
+      <option value="datum-desc">Jongste uitspraak bovenaan</option>
+      <option value="gepubliceerd-desc">Recentst gepubliceerd bovenaan</option>
+      <option value="datum-asc">Oudste uitspraak bovenaan</option>
+    </select>
+  </label>
   <button type="button" class="reset" id="f-reset">Wis filters</button>
 </div>
 <div class="count" id="count"></div>
@@ -149,6 +164,12 @@ function render(){
     }
     return true;
   });
+  const srt=document.getElementById('f-sort').value;
+  out.sort((a,b)=>{
+    if(srt==='datum-asc') return String(a.datum).localeCompare(String(b.datum));
+    if(srt==='gepubliceerd-desc') return String(b.gepubliceerd||b.datum).localeCompare(String(a.gepubliceerd||a.datum));
+    return String(b.datum).localeCompare(String(a.datum));
+  });
   document.getElementById('count').textContent = out.length+' van '+rows.length+' uitspraken';
   document.getElementById('list').innerHTML = out.length? out.map(card).join('') : '<div class="empty">Geen uitspraken gevonden met deze filters.</div>';
 }
@@ -158,12 +179,24 @@ document.getElementById('list').addEventListener('click', e=>{
     e.target.parentElement.parentElement.querySelector('.rr').classList.toggle('open');
   }
 });
-['f-inst','f-belang','f-oordeel','f-q','f-dsoort','f-van','f-tot'].forEach(id=>{
+['f-inst','f-belang','f-oordeel','f-q','f-dsoort','f-van','f-tot','f-sort'].forEach(id=>{
   document.getElementById(id).addEventListener('input', render);
 });
+document.getElementById('f-periode').addEventListener('change', function(){
+  const v=this.value;
+  if(!v){ render(); return; }
+  const now=new Date(); let van;
+  if(v==='ytd'){ van=new Date(now.getFullYear(),0,1); }
+  else { const m={'1m':1,'3m':3,'6m':6,'12m':12}[v]||0; van=new Date(now.getFullYear(),now.getMonth()-m,now.getDate()); }
+  const p=n=>String(n).padStart(2,'0');
+  document.getElementById('f-van').value=van.getFullYear()+'-'+p(van.getMonth()+1)+'-'+p(van.getDate());
+  document.getElementById('f-tot').value='';
+  render();
+});
 document.getElementById('f-reset').addEventListener('click', ()=>{
-  ['f-inst','f-belang','f-oordeel','f-q','f-van','f-tot'].forEach(id=>{document.getElementById(id).value='';});
+  ['f-inst','f-belang','f-oordeel','f-q','f-van','f-tot','f-periode'].forEach(id=>{document.getElementById(id).value='';});
   document.getElementById('f-dsoort').value='datum';
+  document.getElementById('f-sort').value='datum-desc';
   render();
 });
 render();
